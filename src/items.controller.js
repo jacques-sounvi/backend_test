@@ -18,8 +18,26 @@ async function createItem(req, res, next) {
 }
 
 async function getAllItems(req, res, next) {
-	const items = service.getAllItems();
-	return res.json({ items });
+	try {
+	  const { filter_by } = req.query;
+	  let filter = null;
+	  if (filter_by) {
+		if (filter_by === 'active') {
+		  filter = true;
+		} else if (filter_by === 'inactive') {
+		  filter = false;
+		} else {
+		  return res.status(400).json({
+			message: 'Invalid filter',
+			errors: { filter_by: 'must be "active" or "inactive"' },
+		  });
+		}
+	  }
+	  const items = await service.getAllItems(filter);
+	  res.json({ items });
+	} catch (error) {
+	  next(error);
+	}
 }
 
 async function getOneItem(req, res, next) {

@@ -19,9 +19,16 @@ async function createItem(itemData = {}) {
 	return newItem;
 }
 
-async function getAllItems() {
+// add filter as parameter
+async function getAllItems(filter = null) {
+	if (filter !== null) {
+	  const filteredItems = items.filter((item) => item.isActive === filter);
+	  console.log(`Filtering by: ${filter}`, filteredItems);
+	  return filteredItems;
+	}
+	console.log('No filter applied', items);
 	return items;
-}
+  }
 
 async function findItem(id) {
 	return items.find((i) => +i.id === +id);
