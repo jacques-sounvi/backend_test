@@ -1,47 +1,72 @@
-const fs = require('fs');
-const path = require('path');
-const itemFilename = process.env.ITEMS_FILENAME || 'items.json';
+const Item = require('./item.model');
 
-const itemsFilePath = path.join(__dirname, 'data', itemFilename);
-
-// Read and parse items from file
-let items = [];
-try {
-  items = JSON.parse(fs.readFileSync(itemsFilePath).toString());
-} catch (error) {
-  console.error('Error reading items file:', error);
-}
 
 
 async function createItem(itemData = {}) {
-	const newItem = { ...itemData, id: items.length + 1, lastUpdate: new Date() };
-	items = [...items, newItem];
-	return newItem;
-}
-
-// add filter as parameter
-async function getAllItems(filter = null) {
-	if (filter !== null) {
-	  const filteredItems = items.filter((item) => item.isActive === filter);
-	  console.log(`Filtering by: ${filter}`, filteredItems);
-	  return filteredItems;
+	try {
+	  const newItem = await Item.create({
+		...itemData,
+		id: items.length + 1,
+		lastUpdate: new Date()
+	  });
+	  return newItem;
+	} catch (error) {
+	  console.error('Error creating item:', error);
+	  throw new Error('Could not create item');
 	}
-	console.log('No filter applied', items);
-	return items;
   }
 
-async function findItem(id) {
-	return items.find((i) => +i.id === +id);
-}
+  async function getAllItems(filter = null) {
+	try {
+	  let query = {};
+	  if (filter !== null) {
+		query.isActive = filter;
+	  }
+	  const items = await Item.find(query).exec();
+	  return items;
+	} catch (error) {
+	  console.error('Error fetching items:', error);
+	  throw new Error('Could not fetch items');
+	}
+  }
 
-async function updateItem(item, itemData = {}) {
-	const updatedItem = { ...item, ...itemData, lastUpdate: new Date() };
-	items = [...items.filter((i) => i.id !== item.id), updatedItem];
-	return updatedItem;
-}
+  async function findItem(id) {
+	try {
+	  const item = await Item.findById(id).exec();
+	  return item;
+	} catch (error) {
+	  console.error('Error finding item:', error);
+	  throw new Error('Item not found');
+	}
+  }
 
-async function deleteItem(item) {
-	items = items.filter((i) => i.id !== item.id);
-}
+  async function updateItem(id, itemData = {}) {
+	try {
+	  const updatedItem = await Item.findByIdAndUpdate(id, {
+		...itemData,
+		lastUpdate: new Date()
+	  }, { new: true }).exec();
+	  if (!updatedItem) {
+		throw new Error('Item not found');
+	  }
+	  return updatedItem;
+	} catch (error) {
+	  console.error('Error updating item:', error);
+	  throw new Error('Could not update item');
+	}
+  }
+
+  async function deleteItem(id) {
+	try {
+	  const deletedItem = await Item.findByIdAndDelete(id).exec();
+	  if (!deletedItem) {
+		throw new Error('Item not found');
+	  }
+	  return deletedItem;
+	} catch (error) {
+	  console.error('Error deleting item:', error);
+	  throw new Error('Could not delete item');
+	}
+  }
 
 module.exports = { createItem, getAllItems, findItem, updateItem, deleteItem };
