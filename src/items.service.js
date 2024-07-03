@@ -2,9 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const itemFilename = process.env.ITEMS_FILENAME || 'items.json';
 
-let items = JSON.parse(
-	fs.readFileSync(path.join(__dirname, 'data', itemsFilename)).toString(),
-);
+const itemsFilePath = path.join(__dirname, 'data', itemFilename);
+
+// Read and parse items from file
+let items = [];
+try {
+  items = JSON.parse(fs.readFileSync(itemsFilePath).toString());
+} catch (error) {
+  console.error('Error reading items file:', error);
+}
+
 
 async function createItem(itemData = {}) {
 	const newItem = { ...itemData, id: items.length + 1, lastUpdate: new Date() };
